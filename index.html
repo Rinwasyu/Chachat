@@ -105,7 +105,7 @@
         }
       };
       let addMessage = function(id, msg) {
-        let msg_escaped = escape_html(msg);
+        let msg_escaped = remove_html_tag(msg);
         let msg_marked = marked(msg_escaped);
         console.log("msg:" + msg + "\nescaped:" + msg_escaped + "\nmarked" + msg_marked);
         $("#messages").append('<div id="' + id + '" class="card" style="margin:10px;"><div class="card-body">' + msg_marked + '<i class="fa fa-ban pull-right" onclick="banMessage(\'' + id + '\');"></i><i class="fa fa-heart heart pull-left" onclick="this.innerHTML = \' \' + (Number(this.innerHTML) + 1);"> 0</i></div></div>').button('toggle');
