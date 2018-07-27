@@ -109,16 +109,19 @@
         let msg_escaped = remove_html_tag(msg);
         let msg_marked = marked(msg_escaped);
         console.log("msg:" + msg + "\nescaped:" + msg_escaped + "\nmarked" + msg_marked);
-        $("#messages").append('<div id="' + id + '" class="card" style="margin:10px;"><div class="card-body">' + msg_marked + '<i class="fa fa-ban pull-right" onclick="banMessage(\'' + id + '\');"></i><i class="fa fa-heart heart pull-left" onclick="this.innerHTML = \' \' + (Number(this.innerHTML) + 1);"> 0</i></div></div>').button('toggle');
+        $("#messages").append('<div id="' + id + '" style="padding: 10px"><div class="card"><div class="card-body">' + msg_marked + '<i class="fa fa-ban pull-right" onclick="banMessage(\'' + id + '\');"></i><i class="fa fa-heart heart pull-left" onclick="this.innerHTML = \' \' + (Number(this.innerHTML) + 1);"> 0</i></div></div></div>').button('toggle');
       };
       let cancelPost = function() {
         $("#postDialog").modal("hide");
       };
       let banMessage = function(id) {
-        $("#" + id).fadeOut('slow').queue(function() {
+        /*$("#" + id).fadeOut('slow').queue(function() {
           $("#" + id).remove();
           console.log("#" + id + " is removed");
-        });
+        });*/
+        console.log("a");
+        $("#" + id).animate({opacity: 0, height: 0, padding: 0}, {duration: 1000, complete: function() {$("#" + id).remove();}});
+        //});
       };
     </script>
   </head>
@@ -177,12 +180,14 @@
         <div id="leftcontent" class="col-xs-0 col-sm-0 col-md-2 col-lg-3 col-xl-3">
         </div>
         <div id="messages" class="col-xs-12 col-sm-12 col-md-8 col-lg-6 col-xl-6">
-          <div id="test" class="card" style="margin: 10px;">
-            <div class="card-body">
-              <p class="card-text">アルファ版w</p>
-              <i class="fa fa-ban pull-right" onclick="banMessage('test');"></i>
-              <i class="fa fa-heart heart pull-left" onclick="this.innerHTML = ' ' + (Number(this.innerHTML) + 1);"> 0</i>
-              
+          <div id="test" style="padding: 10px;">
+            <div id="test" class="card">
+              <div class="card-body">
+                <p class="card-text">アルファ版w</p>
+                <i class="fa fa-ban pull-right" onclick="banMessage('test');"></i>
+                <i class="fa fa-heart heart pull-left" onclick="this.innerHTML = ' ' + (Number(this.innerHTML) + 1);"> 0</i>
+                
+              </div>
             </div>
           </div>
         </div>
