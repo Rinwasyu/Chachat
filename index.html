@@ -109,7 +109,7 @@
         let msg_escaped = remove_html_tag(msg);
         let msg_marked = marked(msg_escaped);
         console.log("msg:" + msg + "\nescaped:" + msg_escaped + "\nmarked" + msg_marked);
-        $("#messages").append('<div id="' + id + '" style="padding: 10px"><div class="card"><div class="card-body">' + msg_marked + '<i class="fa fa-ban pull-right" onclick="banMessage(\'' + id + '\');"></i><i class="fa fa-heart heart pull-left" onclick="this.innerHTML = \' \' + (Number(this.innerHTML) + 1);"> 0</i></div></div></div>').button('toggle');
+        $("#messages").prepend('<div id="' + id + '" style="padding: 10px"><div class="card"><div class="card-body">' + msg_marked + '<i class="fa fa-ban pull-right" onclick="banMessage(\'' + id + '\');"></i><i class="fa fa-heart heart pull-left" onclick="this.innerHTML = \' \' + (Number(this.innerHTML) + 1);"> 0</i></div></div></div>').button('toggle');
       };
       let cancelPost = function() {
         $("#postDialog").modal("hide");
