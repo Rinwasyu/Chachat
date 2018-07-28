@@ -33,21 +33,26 @@
           let val = snapshot.val();
           console.log("number:" + val.number);
           msg_number = val.number;
-          do {
-            database.ref("/chat/" + channel + "/data/" + msgcount).once("value").then(function(snapshot) {
-              let msg = snapshot.val();
-              addMessage(msg.id, msg.body);
-              console.log("added message");
-            });
-            if (msgcount+1 < val.number) {
-              msgcount++;
-            }else{
-              msgcount++;
-              break;
-            }
-          }while(msgcount < val.number);
+          loadMessage();
         });
       });
+      let loadMessage = function() {
+        database.ref("/chat/" + channel + "/data/" + msgcount).once("value").then(function(snapshot) {
+          let msg = snapshot.val();
+          addMessage(msg.id, msg.body);
+          console.log("added message");
+        });
+        if (msgcount+1 < msg_number) {
+          msgcount++;
+        }else{
+          msgcount++;
+          return 0;
+        }
+        if (msgcount < msg_number) {
+          console.log("loadmsg");
+          setTimeout(loadMessage, 1000);
+        }
+      };
       
       let remove_html_tag = function(string) {
         if(typeof string !== 'string') {
@@ -60,7 +65,7 @@
         console.log("postmsg:" + msg);
         if (msg.match(/\S/g)) {
           console.log("msg_number:" + msg_number);
-          database.ref("/chat/main/data/" + msg_number).set({
+          database.ref("/chat/" + channel + "/data/" + msg_number).set({
             id: "msg-main-" + msg_number,
             body: msg
           });
@@ -75,13 +80,14 @@
         let msg_escaped = remove_html_tag(msg);
         let msg_marked = marked(msg_escaped);
         console.log("msg:" + msg + "\nescaped:" + msg_escaped + "\nmarked" + msg_marked);
-        $("#messages").prepend('<div id="' + id + '" style="padding: 10px"><div class="card"><div class="card-body">' + msg_marked + '<i class="fa fa-ban pull-right" onclick="banMessage(\'' + id + '\');"></i><i class="fa fa-heart heart pull-left" onclick="this.innerHTML = \' \' + (Number(this.innerHTML) + 1);"> 0</i></div></div></div>').button('toggle');
+        $("#messages").prepend('<div id="' + id + '" style="padding: 10px; opacity: 0; "><div class="card"><div class="card-body">' + msg_marked + '<i class="fa fa-ban pull-right" onclick="banMessage(\'' + id + '\');"></i><i class="fa fa-heart heart pull-left" onclick="this.innerHTML = \' \' + (Number(this.innerHTML) + 1);"> 0</i></div></div></div>').button('toggle');
+        $("#" + id).animate({opacity: 1}, {duration: 1000});
       };
       let cancelPost = function() {
         $("#postDialog").modal("hide");
       };
       let banMessage = function(id) {
-        $("#" + id).animate({opacity: 0, height: 0, padding: 0}, {duration: 1000, complete: function() {$("#" + id).remove(); console.log("#" + id + " is removed");}});
+        $("#" + id).animate({opacity: 0, height: 0, paddingTop: 0, paddingBottom: 0}, {duration: 1000, complete: function() {$("#" + id).remove(); console.log("#" + id + " is removed");}});
       };
     </script>
   </head>
