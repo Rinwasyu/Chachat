@@ -24,83 +24,54 @@
       firebase.initializeApp(config);
       
       let database = firebase.database();
+      let msgcount = 0;
+      let msg_number = 0;
+      let channel = "main";
       
       $(function() {
-        database.ref("/chat/main/metadata").on("value", function(snapshot) {
+        database.ref("/chat/" + channel + "/metadata").on("value", function(snapshot) {
           let val = snapshot.val();
           console.log("number:" + val.number);
           msg_number = val.number;
-          do {
-            database.ref("/chat/main/data/" + msgcount).once("value").then(function(snapshot) {
-              let msg = snapshot.val();
-              addMessage(msg.id, msg.body);
-              console.log("added message");
-            });
-            if (msgcount+1 < val.number) {
-              msgcount++;
-            }else{
-              msgcount++;
-              break;
-            }
-          }while(msgcount < val.number);
+          loadMessage();
         });
       });
-    </script>
-    <script>
-      /*$(function() {
-        database.ref("test").set({
-          "a": 0
+      let loadMessage = function() {
+        database.ref("/chat/" + channel + "/data/" + msgcount).once("value").then(function(snapshot) {
+          let msg = snapshot.val();
+          addMessage(msg.id, msg.body);
+          console.log("added message");
         });
-      });*/
-    </script>
-    <script>
-      let escape_html = function(string) {
-        if(typeof string !== 'string') {
-          return string;
+        if (msgcount+1 < msg_number) {
+          msgcount++;
+        }else{
+          msgcount++;
+          return 0;
         }
-        return string.replace(/[&'`"<>]/g, function(match) {
-          return {
-            '&':'&amp;',
-            "'":'&#x27;',
-            '`':'&#x60;',
-            '"':'&quot;',
-            '<':'&lt;',
-            '>':'&gt;'
-          }[match]
-        });
+        if (msgcount < msg_number) {
+          console.log("loadmsg");
+          setTimeout(loadMessage, 1000);
+        }
       };
+      
       let remove_html_tag = function(string) {
         if(typeof string !== 'string') {
           return string;
         }
-        //return string.replace(/<.+(?!.*(\n)).*("[^"]*"|'[^']*'|[^'">])*.*(?!.*(\n)).+>/g, "");
-        //return string.replace(/(?=<(a-z|A-Z)*>)|(?=<(a-z|A-Z)*\s(a-z|A-Z)*="[\s|\S]*".*>)/, "");
         return string.replace(/<[a-zA-Z\/]+(\s+[a-zA-Z]+=?\S*)*>/, "");
-        //return string.replace(/<(".*?"|'.*?'|[^'"])*?>/g, "")
       };
-      let msgcount = 0;
-      let msg_number = 0;
       let postMessage = function() {
-        let msg1 = $("#msgtextarea").val();
-        //let msg2 = remove_html_tag(msg1);
-        let msg2 = /*escape_html(*/msg1/*)*/;
-        let msg3 = /*marked(*/msg2/*)*/;
-        console.log("msg1:" + msg1 + "\nmsg2:" + msg2);
-        if (msg1.length > msg2.length) {
-          //$("#msgstatus").html("HTMLタグは使えません");
-          console.log("HTMLタグは使えません");
-          $("#msgtextarea").val(msg2);
-        }else if (msg2.match(/\S/g)) {
+        let msg = $("#msgtextarea").val();
+        console.log("postmsg:" + msg);
+        if (msg.match(/\S/g)) {
           console.log("msg_number:" + msg_number);
-          database.ref("/chat/main/data/" + msg_number).set({
+          database.ref("/chat/" + channel + "/data/" + msg_number).set({
             id: "msg-main-" + msg_number,
-            body: msg3
+            body: msg
           });
-          database.ref("/chat/main/metadata").set({
+          database.ref("/chat/" + channel + "/metadata").set({
             number: msg_number + 1,
           });
-          //$("#messages").append('<div id="msg' + msgcount + '" class="card" style="margin:10px;"><div class="card-body">' + msg3 + "<i class='fa fa-ban pull-right' onclick='banMessage(\"msg" + msgcount + "\");'></i><i class='fa fa-heart heart pull-left' onclick='this.innerHTML = \" \" + (Number(this.innerHTML) + 1);'> 0</i></div></div>").button('toggle');
-          //msgcount++;
           $("#msgtextarea").val("");
           $('#postDialog').modal('hide');
         }
@@ -109,19 +80,14 @@
         let msg_escaped = remove_html_tag(msg);
         let msg_marked = marked(msg_escaped);
         console.log("msg:" + msg + "\nescaped:" + msg_escaped + "\nmarked" + msg_marked);
-        $("#messages").append('<div id="' + id + '" style="padding: 10px"><div class="card"><div class="card-body">' + msg_marked + '<i class="fa fa-ban pull-right" onclick="banMessage(\'' + id + '\');"></i><i class="fa fa-heart heart pull-left" onclick="this.innerHTML = \' \' + (Number(this.innerHTML) + 1);"> 0</i></div></div></div>').button('toggle');
+        $("#messages").prepend('<div id="' + id + '" style="padding: 10px; opacity: 0; "><div class="card"><div class="card-body">' + msg_marked + '<i class="fa fa-ban pull-right" onclick="banMessage(\'' + id + '\');"></i><i class="fa fa-heart heart pull-left" onclick="this.innerHTML = \' \' + (Number(this.innerHTML) + 1);"> 0</i></div></div></div>').button('toggle');
+        $("#" + id).animate({opacity: 1}, {duration: 1000});
       };
       let cancelPost = function() {
         $("#postDialog").modal("hide");
       };
       let banMessage = function(id) {
-        /*$("#" + id).fadeOut('slow').queue(function() {
-          $("#" + id).remove();
-          console.log("#" + id + " is removed");
-        });*/
-        console.log("a");
-        $("#" + id).animate({opacity: 0, height: 0, padding: 0}, {duration: 1000, complete: function() {$("#" + id).remove();}});
-        //});
+        $("#" + id).animate({opacity: 0, height: 0, paddingTop: 0, paddingBottom: 0}, {duration: 1000, complete: function() {$("#" + id).remove(); console.log("#" + id + " is removed");}});
       };
     </script>
   </head>
