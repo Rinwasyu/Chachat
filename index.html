@@ -22,49 +22,37 @@
         messagingSenderId: "89478653115"
       };
       firebase.initializeApp(config);
-      
+
       let database = firebase.database();
-      let msgcount = 0;
-      let msg_number = 0;
+      let msg_begin = -1;
+      let msg_current = -1;
+      let msg_number = -1;
       let channel = "main";
-      
+
       $(function() {
         database.ref("/chat/" + channel + "/metadata").on("value", function(snapshot) {
-          let val = snapshot.val();
-          console.log("number:" + val.number);
-          msg_number = val.number;
-          loadMessage();
+          msg_number = snapshot.val().number;
+          if (msg_current == -1) {
+            msg_current = msg_number - 1;
+            msg_begin = msg_current;
+            load_crnt_msg();
+            for (let i = 0; i < 8; i++)
+              load_prev_msg();
+          } else {
+            load_next_msg();
+          }
+        });
+        $(window).on("scroll", function() {
+          let bottom = $(document).innerHeight() - $(window).innerHeight();
+          if (bottom <= $(window).scrollTop())
+            for (let i = 0; i < 5; i++)
+              load_prev_msg();
         });
       });
-      let loadMessage = function() {
-        database.ref("/chat/" + channel + "/data/" + msgcount).once("value").then(function(snapshot) {
-          let msg = snapshot.val();
-          addMessage(msg.id, msg.body);
-          console.log("added message");
-        });
-        if (msgcount+1 < msg_number) {
-          msgcount++;
-        }else{
-          msgcount++;
-          return 0;
-        }
-        if (msgcount < msg_number) {
-          console.log("loadmsg");
-          setTimeout(loadMessage, 1000);
-        }
-      };
-      
-      let remove_html_tag = function(string) {
-        if(typeof string !== 'string') {
-          return string;
-        }
-        return string.replace(/<[a-zA-Z\/]+(\s+[a-zA-Z]+=?\S*)*>/, "");
-      };
-      let postMessage = function() {
+
+      let post_msg = function() {
         let msg = $("#msgtextarea").val();
-        console.log("postmsg:" + msg);
         if (msg.match(/\S/g)) {
-          console.log("msg_number:" + msg_number);
           database.ref("/chat/" + channel + "/data/" + msg_number).set({
             id: "msg-main-" + msg_number,
             body: msg
@@ -76,17 +64,63 @@
           $('#postDialog').modal('hide');
         }
       };
-      let addMessage = function(id, msg) {
-        let msg_escaped = remove_html_tag(msg);
-        let msg_marked = marked(msg_escaped);
-        console.log("msg:" + msg + "\nescaped:" + msg_escaped + "\nmarked" + msg_marked);
-        $("#messages").prepend('<div id="' + id + '" style="padding: 10px; opacity: 0; "><div class="card"><div class="card-body">' + msg_marked + '<i class="fa fa-ban pull-right" onclick="banMessage(\'' + id + '\');"></i><i class="fa fa-heart heart pull-left" onclick="this.innerHTML = \' \' + (Number(this.innerHTML) + 1);"> 0</i></div></div></div>').button('toggle');
-        $("#" + id).animate({opacity: 1}, {duration: 1000});
+
+      let load_crnt_msg = function() {
+        database.ref("/chat/" + channel + "/data/" + msg_current).once("value").then(function(snapshot) {
+          let msg = snapshot.val();
+          prepend_msg(msg.id, msg.body);
+        });
       };
-      let cancelPost = function() {
+
+      let load_prev_msg = function() {
+        if (msg_begin > 0)
+          msg_begin--;
+        else
+          return;
+
+        database.ref("/chat/" + channel + "/data/" + msg_begin).once("value").then(function(snapshot) {
+          let msg = snapshot.val();
+          append_msg(msg.id, msg.body);
+        });
+      };
+
+      let load_next_msg = function() {
+        if (msg_current < msg_number - 1)
+          msg_current++;
+        else
+          return;
+
+        database.ref("/chat/" + channel + "/data/" + msg_current).once("value").then(function(snapshot) {
+          let msg = snapshot.val();
+          prepend_msg(msg.id, msg.body);
+        });
+      };
+
+      let gen_msg_html = function(id, body) {
+        let msg_marked = marked(remove_html_tag(body));
+        let msg_html = '<div id="' + id + '" style="padding: 10px; opacity: 0; "><div class="card"><div class="card-body">' + msg_marked + '<i class="fa fa-ban pull-right" onclick="ban_msg(\'' + id + '\');"></i><i class="fa fa-heart heart pull-left" onclick="this.innerHTML = \' \' + (Number(this.innerHTML) + 1);"> 0</i></div></div></div>'
+        return msg_html;
+      };
+      let prepend_msg = function(id, body) {
+        $("#messages").prepend(gen_msg_html(id, body))//.button('toggle'); // なんだこれは
+        $("#" + id).animate({opacity: 1}, {duration: 0});
+      };
+      let append_msg = function(id, body) {
+        $(gen_msg_html(id, body)).insertBefore("#loadmore")//.button('toggle');
+        $("#" + id).animate({opacity: 1}, {duration: 0});
+      };
+
+      let remove_html_tag = function(string) {
+        if(typeof string !== 'string') {
+          return string;
+        }
+        return string.replace(/<[a-zA-Z\/]+(\s+[a-zA-Z]+=?\S*)*>/, "");
+      };
+
+      let cancel_post = function() {
         $("#postDialog").modal("hide");
       };
-      let banMessage = function(id) {
+      let ban_msg = function(id) {
         $("#" + id).animate({opacity: 0, height: 0, paddingTop: 0, paddingBottom: 0}, {duration: 1000, complete: function() {$("#" + id).remove(); console.log("#" + id + " is removed");}});
       };
     </script>
@@ -134,8 +168,8 @@
           </div>
           <div class="modal-footer">
             <p id="msgstatus" class=""></p>
-            <button type="button" class="btn btn-default" onclicK="cancelPost();">Cancel</button>
-            <button type="button" class="btn btn-primary" id="postbutton" onclick="postMessage();">投稿</button>
+            <button type="button" class="btn btn-default" onclicK="cancel_post();">Cancel</button>
+            <button type="button" class="btn btn-primary" id="postbutton" onclick="post_msg();">投稿</button>
           </div>
         </div>
       </div>
@@ -146,7 +180,7 @@
         <div id="leftcontent" class="col-xs-0 col-sm-0 col-md-2 col-lg-3 col-xl-3">
         </div>
         <div id="messages" class="col-xs-12 col-sm-12 col-md-8 col-lg-6 col-xl-6">
-          <div id="test" style="padding: 10px;">
+          <!--<div id="test" style="padding: 10px;">
             <div id="test" class="card">
               <div class="card-body">
                 <p class="card-text">アルファ版w</p>
@@ -155,7 +189,8 @@
                 
               </div>
             </div>
-          </div>
+          </div>-->
+          <div id="loadmore" onclick="for(let i=0;i<5;i++)load_prev_msg();">もっと読み込む</div>
         </div>
         <div id="rightcontent" class="col-xs-0 col-sm-0 col-md-2 col-lg-3 col-xl-3">
         </div>
