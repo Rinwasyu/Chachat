@@ -44,9 +44,8 @@
         });
         $(window).on("scroll", function() {
           let bottom = $(document).innerHeight() - $(window).innerHeight();
-          if (bottom <= $(window).scrollTop())
-            for (let i = 0; i < 5; i++)
-              load_prev_msg();
+          if (bottom <= $(window).scrollTop() + 100)
+            load_prev_msg();
         });
       });
 
@@ -77,7 +76,6 @@
           msg_begin--;
         else
           return;
-
         database.ref("/chat/" + channel + "/data/" + msg_begin).once("value").then(function(snapshot) {
           let msg = snapshot.val();
           append_msg(msg.id, msg.body);
