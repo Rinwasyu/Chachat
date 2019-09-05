@@ -44,9 +44,8 @@
         });
         $(window).on("scroll", function() {
           let bottom = $(document).innerHeight() - $(window).innerHeight();
-          if (bottom <= $(window).scrollTop())
-            for (let i = 0; i < 5; i++)
-              load_prev_msg();
+          if (bottom <= $(window).scrollTop() + 100)
+            load_prev_msg();
         });
       });
 
@@ -77,7 +76,6 @@
           msg_begin--;
         else
           return;
-
         database.ref("/chat/" + channel + "/data/" + msg_begin).once("value").then(function(snapshot) {
           let msg = snapshot.val();
           append_msg(msg.id, msg.body);
@@ -123,12 +121,16 @@
       let ban_msg = function(id) {
         $("#" + id).animate({opacity: 0, height: 0, paddingTop: 0, paddingBottom: 0}, {duration: 1000, complete: function() {$("#" + id).remove(); console.log("#" + id + " is removed");}});
       };
+
+      let scroll_to_top = function() {
+        $("body,html").animate({scrollTop: 0}, 1000);
+      };
     </script>
   </head>
   <body>
     <div class="sticky-top">
       <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="./index.html">ちゃちゃっと（α版）</a>
+        <a class="navbar-brand" href="javascript:void(0);" onclick="scroll_to_top()">ちゃちゃっと（α版）</a>
         <button class="btn pull-right" type="button" data-toggle="modal" data-target="#postDialog">投稿</button>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
